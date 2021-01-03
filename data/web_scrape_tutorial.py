@@ -23,7 +23,6 @@ print(
     f'{first_movie_mscore} with '
     f'{first_movie_votes} votes')
 
-
 # Actual scraping
 names = []
 years = []
@@ -40,6 +39,7 @@ for container in movie_containers:
         votes.append(int(container.find('span', attrs={'name': 'nv'})['data-value']))
 
 import pandas as pd
+
 test_df = pd.DataFrame(
     {
         'movie': names,
@@ -53,4 +53,42 @@ test_df = pd.DataFrame(
 print(test_df.info())
 print(test_df)
 
-# TODO - start off from Script for Multiple Pages
+# Save the dataframne
+test_df.to_csv('./test.csv', index=False)
+
+block = False
+if block:
+    # URL Parameters to be used to hit different pages
+    pages = [str(i) for i in range(1, 5)]
+    years_url = [str(i) for i in range(2000, 2018)]
+
+    # Control the crawl rate. We don't want to overload the server and risk
+    # being blocked. To do this we use the time and sleep functions to mimic human
+    # navigation behaviour
+    from time import sleep, time
+    from random import randint
+    import os
+
+    # Print the text and sleep for a random number of seconds
+    # between 1 and 4
+    for _ in range(0, 5):
+        print('Blah')
+        sleep(randint(1, 4))
+
+    # Monitor progress
+    # 1. Frequency of requests
+    # 2. Number of requests
+    # 3. Status code of requests
+
+    start_time = time()
+    requests = 0
+    for _ in range(0, 5):
+        # Insert rquest here
+        requests += 1
+        sleep(randint(1, 3))
+        elapsed_time = time() - start_time
+        print(f'Request: {requests}, Frequency: {requests/elapsed_time}')
+    os.system('clear')
+
+
+
