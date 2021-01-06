@@ -71,5 +71,3 @@ mv_rating_df = pd.DataFrame(
 
 # Save the dataframe
 mv_rating_df.to_csv('./imdb_movies.csv', index=False)
-
-# TODO - Perform basic analysis on the scraped dataset
