@@ -3,6 +3,7 @@
 
 # Scrape from - 'https://www.trustpilot.com/review/flixbus.com?languages=all&page='
 import datetime
+import json
 import os
 import pandas as pd
 from random import randint
@@ -11,6 +12,10 @@ from warnings import warn
 
 from requests import get
 from bs4 import BeautifulSoup
+
+
+def clean_string(column):
+    return column.apply(lambda x: x.replace("\n", '', 2)).apply(lambda x: x.replace('  ', ''))
 
 
 def scrape_trustpilot_reviews(PATH, n_pages):
@@ -33,7 +38,7 @@ def scrape_trustpilot_reviews(PATH, n_pages):
     # Setup monitoring variables
     start_time = time()
     requests = 0
-    request_limit = 72
+    request_limit = 100
 
     # For each page specified, get reviews
     for p in range(n_pages):
@@ -58,26 +63,28 @@ def scrape_trustpilot_reviews(PATH, n_pages):
             break
 
         # Identify page areas of interest
-        page_html = BeautifulSoup(requests.text, 'html.parser')
-        review_containers = page_html.find_all('div', class_='review-info__body')
-        user_containers = page_html.find_all('div', class_='customer-info__details')
-        rating_containers = page_html.find_all('div', class_='review-info__header__verified')
-        date_container = page_html.find_all('div', class_='header__verified__date')
-        profile_container = page_html.find_all('div', class_='review__consumer-information')
+        page_html = BeautifulSoup(response.text, 'html.parser')
+        review_containers = page_html.find_all('div', class_='review-content__body')
+        user_containers = page_html.find_all('div', class_='consumer-information__details')
+        rating_container = page_html.find_all('div', class_='review-content-header')
+        dates_container = page_html.find_all("section", {"class": "review__content"})
+        profile_container = page_html.find_all('aside', class_='review__consumer-information')
 
-        for x in range(len(date_container)):
+        for x in range(len(rating_container)):
             review_c = review_containers[x]
             headers.append(review_c.h2.a.text)
             reviews.append(review_c.p.text)
 
             reviewer = user_containers[x]
-            names.append(reviewer.h3.text)
+            names.append(reviewer.div.text)
 
-            rating = rating_containers[x]
-            ratings.append(rating.div.attrs['class'][1][12])
+            rating = rating_container[x]
+            ratings.append(rating.img.get('alt'))
 
-            date = date_container[x]
-            dates.append(datetime.datetime.strptime(date.time.attrs['datetime'][0:10], '%Y-%m-%d').date())
+            date = dates_container[x]
+            date_json = json.loads(date.find('script').string)
+            date_j = date_json['publishedDate']
+            dates.append(date_j)
 
             prof = profile_container[x]
             link = 'https://www.trustpilot.com' + prof.a['href']
@@ -96,5 +103,12 @@ def scrape_trustpilot_reviews(PATH, n_pages):
             'Date': dates
         }
     )
+
+    reviews_df.Header = clean_string(reviews_df.Header)
+    reviews_df.Review = clean_string(reviews_df.Review)
+    reviews_df.Name = clean_string(reviews_df.Name)
+    reviews_df.Location = clean_string(reviews_df.Location)
+    reviews_df.Location = reviews_df.Location.apply(lambda x: x.split(',', 1)[-1])
+    reviews_df.Date = pd.to_datetime(reviews_df.Date)
 
     reviews_df.to_csv('./reviews_raw.csv', index=False)
