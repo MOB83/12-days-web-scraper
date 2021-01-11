@@ -38,13 +38,14 @@ def scrape_trustpilot_reviews(PATH, n_pages):
     # Setup monitoring variables
     start_time = time()
     requests = 0
-    request_limit = 100
+    request_limit = 50
 
     # For each page specified, get reviews
-    for p in range(n_pages):
+    for p in range(1, n_pages+1):
 
         url = f'{PATH}{p}'
         response = get(url)
+        print(f'URL: {url}')
 
         # Pause the loop to limit access to the server
         sleep(randint(8, 15))
@@ -70,10 +71,15 @@ def scrape_trustpilot_reviews(PATH, n_pages):
         dates_container = page_html.find_all("section", {"class": "review__content"})
         profile_container = page_html.find_all('aside', class_='review__consumer-information')
 
+        print(f'Containers for request: {len(rating_container)}')
         for x in range(len(rating_container)):
             review_c = review_containers[x]
             headers.append(review_c.h2.a.text)
-            reviews.append(review_c.p.text)
+            r = review_c.p
+            if r:
+                reviews.append(review_c.p.text)
+            else:
+                reviews.append('')
 
             reviewer = user_containers[x]
             names.append(reviewer.div.text)
@@ -89,9 +95,10 @@ def scrape_trustpilot_reviews(PATH, n_pages):
             prof = profile_container[x]
             link = 'https://www.trustpilot.com' + prof.a['href']
             c_profile = get(f'{link}')
-            profile_html = BeautifulSoup(c_profile.text, 'html.parser')
-            cust_container = profile_html.find('div', class_='user-summary-location')
-            locations.append(cust_container.text)
+            if c_profile:
+                profile_html = BeautifulSoup(c_profile.text, 'html.parser')
+                cust_container = profile_html.find('div', class_='user-summary-location')
+                locations.append(cust_container.text)
 
     reviews_df = pd.DataFrame(
         {
