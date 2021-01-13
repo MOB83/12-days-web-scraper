@@ -18,12 +18,13 @@ def clean_string(column):
     return column.apply(lambda x: x.replace("\n", '', 2)).apply(lambda x: x.replace('  ', ''))
 
 
-def scrape_trustpilot_reviews(PATH, n_pages):
+
+def scrape_trustpilot_reviews(company, PATH, n_pages):
     """
     Method to scrape data from trust pilot reviews
+    :param company: The company that we're pulling reviews for
     :param PATH: The path to scrape review data from
     :param n_pages: The number of pages to scrape
-    :param sleep_time: The time to sleep between requests to avoid overloading the server
     :return: Dataframe containing the review data
     """
 
@@ -102,6 +103,7 @@ def scrape_trustpilot_reviews(PATH, n_pages):
 
     reviews_df = pd.DataFrame(
         {
+            'Company': company,
             'Header': headers,
             'Review': reviews,
             'Rating': ratings,
@@ -118,4 +120,4 @@ def scrape_trustpilot_reviews(PATH, n_pages):
     reviews_df.Location = reviews_df.Location.apply(lambda x: x.split(',', 1)[-1])
     reviews_df.Date = pd.to_datetime(reviews_df.Date)
 
-    reviews_df.to_csv('./reviews_raw.csv', index=False)
+    return reviews_df
