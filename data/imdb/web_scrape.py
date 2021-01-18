@@ -1,4 +1,5 @@
 # Script to perform web scraping of IMDB
+# From this reousrce - https://www.dataquest.io/blog/web-scraping-beautifulsoup/
 import os
 from time import time, sleep
 from random import randint
